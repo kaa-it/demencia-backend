@@ -124,6 +124,10 @@ AUTHENTICATION_BACKENDS = [
     "graphql_auth.backends.GraphQLAuthBackend",
 ]
 
+GRAPHQL_AUTH = {
+    'SEND_ACTIVATION_EMAIL': False,
+}
+
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_ALLOW_ANY_CLASSES": [
