@@ -1,13 +1,11 @@
 import graphene
-from graphene_django.types import DjangoObjectType, ObjectType
-
 from django.conf import settings
+from graphene_django.types import DjangoObjectType, ObjectType
 
 from demencia_relatives_test.models import Answer as AnswerRelatives, DementiaTestCase as DementiaRelativesTestCase
 from demencia_relatives_test.services.test_service import send_answer as send_relatives_answer
 from demencia_test.models import Answer, DementiaTestCase
 from demencia_test.services.test_service import send_answer
-
 from .models import (
     LeftMenuElement,
     MainMenuElement,
@@ -138,6 +136,7 @@ class AnswerType(DjangoObjectType):
     def resolve_image(self, info):
         if self.image:
             return f"{settings.CURRENTLY_HOST}:{settings.CURRENTLY_PORT}{self.image.url}"
+        return None
 
 
 class SettingsType(DjangoObjectType):
@@ -251,16 +250,12 @@ class Query(ObjectType):
             send_relatives_answer(id)
             result = int(AnswerRelatives.objects.get(test_case=id, question=27).answer_value)
             return Instruction.objects.filter(min_point__lte=result, max_point__gte=result, is_send=True)
-        else:
-            send_answer(id)
-            result = int(Answer.objects.get(test_case=id, question=26).answer_value)
-            return Instruction.objects.filter(min_point__lte=result, max_point__gte=result, is_send=True)
+        send_answer(id)
+        result = int(Answer.objects.get(test_case=id, question=26).answer_value)
+        return Instruction.objects.filter(min_point__lte=result, max_point__gte=result, is_send=True)
 
     def resolve_users(self, info, forClosePerson, first=None, skip=None, **kwargs):  # noqa: N803
-        if forClosePerson:
-            users = AnswerRelatives.objects.all()
-        else:
-            users = Answer.objects.all()
+        users = AnswerRelatives.objects.all() if forClosePerson else Answer.objects.all()
 
         if skip:
             users = users[skip:]
