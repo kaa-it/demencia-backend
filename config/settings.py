@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     "tinymce",
     "url_or_relative_url_field",
     "adminsortable2",
+    "graphql_auth",
+    "django_filters",
+    "users.apps.UsersConfig",
     "core",
     "demencia",
     "demencia_test",
@@ -109,7 +112,37 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MAX_SIZE = env.int("MAX_SIZE")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-GRAPHENE = {"SCHEMA": "config.schema.schema"}
+GRAPHENE = {
+    "SCHEMA": "config.schema.schema",
+    "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "graphql_auth.backends.GraphQLAuthBackend",
+]
+
+GRAPHQL_AUTH = {
+    'SEND_ACTIVATION_EMAIL': False,
+}
+
+GRAPHQL_JWT = {
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_ALLOW_ANY_CLASSES": [
+        "graphql_auth.mutations.Register",
+        "graphql_auth.mutations.VerifyAccount",
+        "graphql_auth.mutations.ResendActivationEmail",
+        "graphql_auth.mutations.SendPasswordResetEmail",
+        "graphql_auth.mutations.PasswordReset",
+        "graphql_auth.mutations.ObtainJSONWebToken",
+        "graphql_auth.mutations.VerifyToken",
+        "graphql_auth.mutations.RefreshToken",
+        "graphql_auth.mutations.RevokeToken",
+        "graphql_auth.mutations.VerifySecondaryEmail",
+    ],
+}
 
 PHONENUMBER_DB_FORMAT = "INTERNATIONAL"
 PHONENUMBER_DEFAULT_REGION = "RU"
@@ -124,3 +157,5 @@ EMAIL_NAME = env.str("EMAIL_NAME")
 EMAIL_PORT = env.int("EMAIL_PORT")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
 EMAIL_FILE_PATH = os.path.join(BASE_DIR)
+
+AUTH_USER_MODEL = 'users.CustomUser'

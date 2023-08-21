@@ -1,8 +1,9 @@
 import datetime
 
-from demencia_relatives_test.models import Answer, DementiaTestCase
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+
+from demencia_relatives_test.models import Answer, DementiaTestCase
 
 
 def test_for_close_person(input):
