@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from phonenumber_field.modelfields import PhoneNumberField
 from solo.models import SingletonModel
 from tinymce.models import HTMLField
@@ -196,3 +197,29 @@ class Settings(SingletonModel):
 
     def __str__(self):
         return "Настройки"
+
+
+class Instruction(DateMixin):
+    """PDF инструкций."""
+
+    name = models.CharField("Название", max_length=30, help_text="Введите название")
+    description = models.CharField("Описание", max_length=255, help_text="Введите описание")
+    file = models.FileField("Файл", upload_to="pdf/", help_text="Загрузите файл")
+    min_point = models.SmallIntegerField("Минимальный балл", help_text="Введите число")
+    max_point = models.SmallIntegerField("Максимальный балл", help_text="Введите число")
+    is_send = models.BooleanField("Отправка пользователю", default=False, help_text="Включить/отключить отправку")
+
+    class Meta:
+        ordering = ("name", "-is_send")
+        verbose_name = "Инструкция"
+        verbose_name_plural = "Инструкции"
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        """Проверка значений max_point и min_point на корректное заполнение."""
+        if self.min_point < 0 or self.max_point < 0:
+            raise ValidationError("Минимальный и Максимальный балл: Значения должны быть больше 0!")
+        if not self.max_point > self.min_point:
+            raise ValidationError("Максимальное значение должно быть больше минимального.")
