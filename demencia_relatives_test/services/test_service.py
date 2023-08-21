@@ -7,10 +7,10 @@ from django.core.mail import send_mail
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.template.loader import render_to_string
 
-from demencia.models import Settings
 from demencia_relatives_test.models import Answer, DementiaTestCase, ResultAnswer
 
 from .answers import RESULTS
+from demencia.models import Settings
 
 
 logging.basicConfig(

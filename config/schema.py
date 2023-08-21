@@ -2,10 +2,9 @@ import graphene
 from graphql_auth.schema import MeQuery, UserQuery
 
 import demencia_test.schema
+import users.schema
 
 import demencia.schema
-
-import users.schema
 
 
 class Query(

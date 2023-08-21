@@ -3,11 +3,10 @@ from graphene_django.types import DjangoObjectType, ObjectType
 
 from django.conf import settings
 
-from demencia_test.models import Answer, DementiaTestCase
-from demencia_relatives_test.models import DementiaTestCase as DementiaRelativesTestCase
-from demencia_relatives_test.models import Answer as AnswerRelatives
-from demencia_test.services.test_service import send_answer
+from demencia_relatives_test.models import Answer as AnswerRelatives, DementiaTestCase as DementiaRelativesTestCase
 from demencia_relatives_test.services.test_service import send_answer as send_relatives_answer
+from demencia_test.models import Answer, DementiaTestCase
+from demencia_test.services.test_service import send_answer
 
 from .models import LeftMenuElement, MainMenuElement, MapPoint, NewsArticle, Partner, Region, Settings, Slider
 
@@ -197,16 +196,14 @@ class Query(ObjectType):
     def resolve_new_test(self, info, forClosePerson):  # noqa: N803
         if forClosePerson:
             return DementiaRelativesTestCase.objects.create().id
-        else:
-            return DementiaTestCase.objects.create().id
+        return DementiaTestCase.objects.create().id
 
     def resolve_test_result(self, info, id, forClosePerson):  # noqa: N803
         if forClosePerson:
             send_relatives_answer(id)
             return AnswerRelatives.objects.get(test_case=id, question=27).answer_value
-        else:
-            send_answer(id)
-            return Answer.objects.get(test_case=id, question=26).answer_value
+        send_answer(id)
+        return Answer.objects.get(test_case=id, question=26).answer_value
 
 
 schema = graphene.Schema(query=Query)

@@ -7,12 +7,12 @@ from django.core.mail import send_mail
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.template.loader import render_to_string
 
-from demencia.models import Settings
 from demencia_test.models import Answer, DementiaTestCase, ResultAnswer
 from demencia_test.services.countries_list.ru_set import COUNTRIES_NAMES
 from demencia_test.services.image_neural_handler.onnx_inference import get_image_score
 
 from config.settings import MEDIA_ROOT  # noqa: F401
+from demencia.models import Settings
 
 
 logging.basicConfig(
@@ -65,16 +65,14 @@ class TestService:
         treated_answer = answer.lower().strip()
         if treated_answer in TestService.CORRECT_ANSWER_16:
             return 2
-        else:
-            return 0
+        return 0
 
     def question_17(answer: str, *args) -> int:
         """Сколько полтинников в 3 рублях?"""
         treated_answer = answer.lower().strip()
         if treated_answer in TestService.CORRECT_ANSWER_17:
             return 1
-        else:
-            return 0
+        return 0
 
     def question_18(answer: str, *args) -> int:
         """
@@ -84,8 +82,7 @@ class TestService:
         treated_answer = answer.lower().strip()
         if treated_answer in TestService.CORRECT_ANSWER_18:
             return 1
-        else:
-            return 0
+        return 0
 
     def question_19(answer: str, *args) -> int:
         return 0

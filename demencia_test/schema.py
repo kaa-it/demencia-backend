@@ -1,13 +1,14 @@
 import datetime
 
 import graphene
-from django.core.validators import validate_email
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 from demencia_relatives_test.schema import test_for_close_person
+
 from .models import Answer, DementiaTestCase
 
 
