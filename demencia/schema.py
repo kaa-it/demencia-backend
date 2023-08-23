@@ -1,14 +1,22 @@
 import graphene
-from graphene_django.types import DjangoObjectType, ObjectType
-
 from django.conf import settings
+from graphene_django.types import DjangoObjectType, ObjectType
 
 from demencia_relatives_test.models import Answer as AnswerRelatives, DementiaTestCase as DementiaRelativesTestCase
 from demencia_relatives_test.services.test_service import send_answer as send_relatives_answer
 from demencia_test.models import Answer, DementiaTestCase
 from demencia_test.services.test_service import send_answer
-
-from .models import LeftMenuElement, MainMenuElement, MapPoint, NewsArticle, Partner, Region, Settings, Slider
+from .models import (
+    LeftMenuElement,
+    MainMenuElement,
+    MapPoint,
+    NewsArticle,
+    Partner,
+    Region,
+    Settings,
+    Slider,
+    Instruction
+)
 
 
 class BaseType(ObjectType):
@@ -100,6 +108,37 @@ class LeftMenuElementType(BaseType, DjangoObjectType):
         exclude = ("is_active", "position")
 
 
+class InstructionType(BaseType, DjangoObjectType):
+    name = graphene.String(description="Название", required=True)
+    description = graphene.String(description="Описание", required=True)
+    file = graphene.String(description="Ссылка на pdf файл", required=True)
+    min_point = graphene.String(description="Минимальный балл", required=True)
+    max_point = graphene.String(description="Максимальный балл", required=True)
+
+    class Meta:
+        model = Instruction
+        exclude = ("is_send",)
+
+    def resolve_file(self, info):
+        return f"{settings.CURRENTLY_HOST}:{settings.CURRENTLY_PORT}{self.file.url}"
+
+
+class AnswerType(DjangoObjectType):
+    question = graphene.String(description="Номер вопроса", required=True)
+    answer_value = graphene.String(description="Ответ на вопрос")
+    image = graphene.String(description="Изображение")
+    created_at = graphene.DateTime(description="Дата создания", required=True)
+
+    class Meta:
+        model = Answer
+        fields = ("question", "answer_value", "test_case", "image", "created_at")
+
+    def resolve_image(self, info):
+        if self.image:
+            return f"{settings.CURRENTLY_HOST}:{settings.CURRENTLY_PORT}{self.image.url}"
+        return None
+
+
 class SettingsType(DjangoObjectType):
     site_name = graphene.String(description="Название сайта", required=True)
     copyright = graphene.String(description="Авторское право", required=True)
@@ -137,8 +176,9 @@ class Query(ObjectType):
     new_test = graphene.ID(
         forClosePerson=graphene.Boolean(), description="Создаёт новый объект класса DementiaTestCase"
     )
-    test_result = graphene.String(
-        id=graphene.ID(required=True), forClosePerson=graphene.Boolean(), description="Итоговый результат по id теста"
+    test_result = graphene.List(
+        InstructionType, id=graphene.ID(required=True), forClosePerson=graphene.Boolean(),
+        description="Итоговый результат по id теста"
     )
     regions = graphene.List(
         graphene.NonNull(RegionType),
@@ -162,6 +202,13 @@ class Query(ObjectType):
         description="Активные объекты класса LeftMenuElement(Элемент левого меню)",
     )
     settings = graphene.Field(SettingsType, description="Настройки главной страницы")
+    users = graphene.List(
+        AnswerType,
+        forClosePerson=graphene.Boolean(),
+        first=graphene.Int(),
+        skip=graphene.Int(),
+        description="Все участники теста"
+    )
 
     def resolve_news_articles(self, info, **kwargs):
         return NewsArticle.objects.active()
@@ -201,9 +248,22 @@ class Query(ObjectType):
     def resolve_test_result(self, info, id, forClosePerson):  # noqa: N803
         if forClosePerson:
             send_relatives_answer(id)
-            return AnswerRelatives.objects.get(test_case=id, question=27).answer_value
+            result = int(AnswerRelatives.objects.get(test_case=id, question=27).answer_value)
+            return Instruction.objects.filter(min_point__lte=result, max_point__gte=result, is_send=True)
         send_answer(id)
-        return Answer.objects.get(test_case=id, question=26).answer_value
+        result = int(Answer.objects.get(test_case=id, question=26).answer_value)
+        return Instruction.objects.filter(min_point__lte=result, max_point__gte=result, is_send=True)
+
+    def resolve_users(self, info, forClosePerson, first=None, skip=None, **kwargs):  # noqa: N803
+        users = AnswerRelatives.objects.all() if forClosePerson else Answer.objects.all()
+
+        if skip:
+            users = users[skip:]
+
+        if first:
+            users = users[:first]
+
+        return users
 
 
 schema = graphene.Schema(query=Query)

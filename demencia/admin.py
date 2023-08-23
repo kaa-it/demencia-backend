@@ -7,10 +7,19 @@ from solo.admin import SingletonModelAdmin
 from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django.utils.html import strip_tags
+from django.utils.html import strip_tags, format_html
 from django.utils.safestring import mark_safe
 
-from demencia.models import LeftMenuElement, MainMenuElement, MapPoint, NewsArticle, Partner, Settings, Slider
+from demencia.models import (
+    LeftMenuElement,
+    MainMenuElement,
+    MapPoint,
+    NewsArticle,
+    Partner,
+    Settings,
+    Slider,
+    Instruction
+)
 
 
 @admin.action(description="Сделать активными")
@@ -305,3 +314,26 @@ admin.site.register(Partner, PartnerAdmin)
 admin.site.register(Slider, SliderAdmin)
 admin.site.register(LeftMenuElement, LeftMenuElementAdmin)
 admin.site.register(MainMenuElement, MainMenuElementAdmin)
+
+
+@admin.register(Instruction)
+class InstructionAdmin(admin.ModelAdmin):
+    """Управление pdf инструкциями."""
+
+    list_display = ("name", "description", "view_pdf", "min_point", "max_point", "is_send")
+    list_display_links = ("name",)
+    list_filter = ("min_point", "max_point", "is_send")
+    search_fields = ("name", "description")
+    readonly_fields = ("created_at", "updated_at", "view_pdf")
+    fields = (
+        "is_send",
+        ("name", "description"),
+        ("min_point", "max_point"),
+        ("file", "view_pdf"),
+        ("created_at", "updated_at"),
+    )
+
+    @admin.display(description="Файл")
+    def view_pdf(self, obj):
+        """Создаёт и отображает ссылку для просмотра pdf файла."""
+        return format_html('<a href="{}" target="_blank">Просмотреть содержимое</a>', obj.file.url)
